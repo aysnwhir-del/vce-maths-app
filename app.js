@@ -101,6 +101,9 @@ function rankedTopics() {
                .sort((a,b) => b.eis - a.eis);
 }
 function overallEIS() {
+  const u = currentUserData();
+  const totalAnswered = Object.values(u.progress || {}).reduce((s,p) => s + (p.total||0), 0);
+  if (totalAnswered === 0) return 0; // no data yet — show 0%, not a default-weakness estimate
   const ranked = rankedTopics();
   const avg = ranked.reduce((s,t) => s + t.eis, 0) / ranked.length;
   return Math.round((avg/10)*100); // display as a %
