@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>VCE Maths Support App</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     SCREEN: AUTH (Login / Signup)
+══════════════════════════════ -->
+<div id="screen-auth" class="screen active">
+  <div class="auth-wrap">
+    <div class="auth-brand">
+      <div class="logo">📐</div>
+      <h1>VCE <span>Maths</span></h1>
+      <p>Adaptive learning &amp; mistake bank support</p>
+      <span class="tag">Free · Built for VCE students</span>
+    </div>
+
+    <div class="auth-card" id="continue-card" style="display:none">
+      <p class="continue-label">Welcome back</p>
+      <div class="continue-name" id="continue-name"></div>
+      <button class="btn-primary" id="btn-continue-session" onclick="continueSession()">Continue</button>
+      <button class="btn-sec" style="width:100%;margin-top:10px" onclick="switchAccount()">Not you? Log in as someone else</button>
+    </div>
+
+    <div class="auth-card" id="auth-card-real">
+      <div class="auth-tabs">
+        <button class="auth-tab on" id="tab-login" onclick="setAuthMode('login')">Log In</button>
+        <button class="auth-tab" id="tab-signup" onclick="setAuthMode('signup')">Sign Up</button>
+      </div>
+
+      <div class="err-box" id="auth-err"></div>
+      <div class="ok-box" id="auth-ok"></div>
+
+      <div class="field" id="field-name" style="display:none">
+        <label>Your Name</label>
+        <input type="text" id="inp-name" placeholder="e.g. Hasan" autocomplete="name"/>
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="inp-email" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="inp-pass" placeholder="At least 4 characters" autocomplete="current-password"/>
+      </div>
+      <button class="btn-primary" id="auth-submit" onclick="submitAuth()">Log In</button>
+    </div>
+
+    <p class="demo-note">🔒 Your account and progress are saved securely on this device.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN: HOME (Dashboard)
+══════════════════════════════ -->
+<div id="screen-home" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-title">VCE <span>Maths</span></div>
+      <button class="avatar" id="btn-avatar" onclick="openProfile()" title="Profile & settings"><span id="avatar-initials">HT</span></button>
+    </div>
+
+    <div class="home-body">
+      <div class="hero">
+        <div class="hero-accent"></div>
+        <div class="hero-top">
+          <div>
+            <h2 id="home-username-h2">Welcome back, <span id="home-username"></span></h2>
+            <p id="home-substat">0 questions answered so far</p>
+            <div class="streak-badge" id="streak-badge" style="display:none">🔥 <span id="streak-num">0</span> day streak</div>
+          </div>
+          <div>
+            <div class="eis-ring"><canvas id="eis-canvas"></canvas><span id="eis-pct">0%</span></div>
+            <div class="eis-label">Exam Impact<br/>Score</div>
+          </div>
+        </div>
+        <button class="btn-start" id="btn-start"><span id="btn-start-label">▶ Start Practice</span></button>
+      </div>
+
+      <div class="section-label">Topics — sorted by <b>Exam Impact Score</b></div>
+      <div class="subject-tabs" id="home-subject-tabs"></div>
+      <div class="topic-list" id="topic-list"></div>
+
+      <div class="section-label">Your Study Tools</div>
+      <div class="f-card">
+        <div class="f-icon orange">⚠</div>
+        <div class="f-info">
+          <div class="f-title">Mistake Bank</div>
+          <div class="f-sub" id="mb-count">0 questions due</div>
+        </div>
+        <button class="f-btn orange" id="btn-review">Review</button>
+      </div>
+      <div class="f-card">
+        <div class="f-icon green">📄</div>
+        <div class="f-info">
+          <div class="f-title">Bound Reference Draft</div>
+          <div class="f-sub" id="br-count">0 formulas saved</div>
+        </div>
+        <button class="f-btn green" onclick="show('boundref')">View</button>
+      </div>
+    </div>
+  </div>
+  <div class="navbar">
+    <button class="nav-item on" data-screen="home" onclick="show('home')"><span class="nav-ic">⌂</span><span class="nav-lbl">Home</span></button>
+    <button class="nav-item" data-screen="notes" onclick="show('notes')"><span class="nav-ic">📖</span><span class="nav-lbl">Notes</span></button>
+    <button class="nav-item" data-screen="practice" onclick="openPractice()"><span class="nav-ic">✎</span><span class="nav-lbl">Practice</span></button>
+    <button class="nav-item" data-screen="boundref" onclick="show('boundref')"><span class="nav-ic">📄</span><span class="nav-lbl">Ref</span></button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN: NOTES LIST
+══════════════════════════════ -->
+<div id="screen-notes" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="btn-back" onclick="show('home')">←</button>
+        <div class="topbar-title">Study Notes</div>
+      </div>
+    </div>
+    <div class="body-pad">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="notes-search" type="text" placeholder="Search topics or notes…" oninput="setNotesSearch(this.value)"/>
+      </div>
+      <div class="subject-tabs" id="notes-subject-tabs"></div>
+      <div id="notes-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN: NOTE DETAIL
+══════════════════════════════ -->
+<div id="screen-notedetail" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="btn-back" onclick="show('notes')">←</button>
+        <div class="topbar-title" id="notedetail-title">Topic</div>
+      </div>
+    </div>
+    <div class="body-pad" id="notedetail-body"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN: PRACTICE / QUIZ
+══════════════════════════════ -->
+<div id="screen-practice" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="btn-back" onclick="show('home')">←</button>
+        <div class="topbar-title" id="quiz-back-label">Practice</div>
+      </div>
+    </div>
+    <div class="body-pad">
+
+      <div id="practice-setup">
+        <div class="setup-card">
+          <div class="setup-label">Choose a Subject</div>
+          <div class="subject-tabs" id="practice-subject-tabs" style="margin-bottom:16px"></div>
+          <div class="setup-label">Choose a Topic</div>
+          <div class="chip-row" id="topic-chips"></div>
+          <div class="setup-label">Difficulty</div>
+          <div class="diff-row">
+            <button class="d-btn" id="db-easy" onclick="selectDiff('easy')">Easy</button>
+            <button class="d-btn" id="db-medium" onclick="selectDiff('medium')">Medium</button>
+            <button class="d-btn" id="db-hard" onclick="selectDiff('hard')">Hard</button>
+          </div>
+        </div>
+        <p style="text-align:center;color:var(--text-dim);font-size:0.8rem;margin-bottom:14px" id="setup-count"></p>
+        <button class="btn-primary" id="btn-begin" onclick="beginPractice()">Begin Practice Session</button>
+      </div>
+
+      <div id="quiz-area" style="display:none">
+        <div class="score-bar">
+          <span class="score-lbl">Session Score</span>
+          <span class="score-val" id="score-disp">0 / 0</span>
+        </div>
+        <div id="q-area"></div>
+        <div class="action-row" id="act-row" style="display:none">
+          <button class="btn-sec" id="btn-back-home" style="display:none" onclick="show('home')">← Home</button>
+          <button class="btn-sec" id="btn-exit" onclick="exitPractice()">Exit</button>
+          <button class="btn-teal" id="btn-next" onclick="nextQuestion()" disabled>Next →</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN: BOUND REFERENCE
+══════════════════════════════ -->
+<div id="screen-boundref" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="btn-back" onclick="show('home')">←</button>
+        <div class="topbar-title">Bound Reference Draft</div>
+      </div>
+    </div>
+    <div class="body-pad">
+      <p style="color:var(--text-dim);font-size:0.82rem;margin-bottom:16px;line-height:1.6">
+        Formulas you get wrong twice or more are automatically added here, so you can build your allowed exam reference sheet as you study.
+      </p>
+      <div id="boundref-list"></div>
+      <button class="print-btn" id="print-btn" onclick="printRef()">🖨 Export / Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     SCREEN: PROFILE / SETTINGS
+══════════════════════════════ -->
+<div id="screen-profile" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="btn-back" onclick="show('home')">←</button>
+        <div class="topbar-title">Profile & Settings</div>
+      </div>
+    </div>
+    <div class="body-pad">
+      <div class="profile-card">
+        <div class="profile-avatar" id="profile-avatar-big"></div>
+        <div class="profile-name" id="profile-name"></div>
+        <div class="profile-email" id="profile-email"></div>
+      </div>
+
+      <div class="section-label">Change Password</div>
+      <div class="err-box" id="pwd-err"></div>
+      <div class="ok-box" id="pwd-ok"></div>
+      <div class="field">
+        <label>Current Password</label>
+        <input type="password" id="pwd-current" autocomplete="current-password"/>
+      </div>
+      <div class="field">
+        <label>New Password</label>
+        <input type="password" id="pwd-new" placeholder="At least 4 characters" autocomplete="new-password"/>
+      </div>
+      <div class="field">
+        <label>Confirm New Password</label>
+        <input type="password" id="pwd-confirm" autocomplete="new-password"/>
+      </div>
+      <button class="btn-primary" onclick="changePassword()">Update Password</button>
+
+      <button class="btn-sec" style="width:100%;margin-top:26px" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script src="generators.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
