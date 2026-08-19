@@ -117,16 +117,30 @@ function overallEIS() {
 function addToMistakeBank(q) {
   const u = currentUserData();
   const now = Date.now();
-  u.mistakeBank.push({ id: 'm_'+now+'_'+Math.random().toString(36).slice(2,7), snapshot: q, added: now, nextReview: now + 86400000, timesWrong: 1 });
+  u.mistakeBank.push({ id: 'm_'+now+'_'+Math.random().toString(36).slice(2,7), snapshot: q, added: now, nextReview: now + 86400000, timesWrong: 1, correctStreak: 0 });
 }
 function removeMistakeEntry(entryId) {
   const u = currentUserData();
   u.mistakeBank = u.mistakeBank.filter(m => m.id !== entryId);
 }
+// Requires 2 consecutive correct reviews before a mistake is considered "learned" and removed —
+// getting it right once could just be luck, so real spaced repetition needs a streak, not a single hit.
+const REVIEWS_TO_CLEAR = 2;
+function handleCorrectReview(entryId) {
+  const u = currentUserData();
+  const entry = u.mistakeBank.find(m => m.id === entryId);
+  if (!entry) return;
+  entry.correctStreak = (entry.correctStreak || 0) + 1;
+  if (entry.correctStreak >= REVIEWS_TO_CLEAR) {
+    removeMistakeEntry(entryId);
+  } else {
+    entry.nextReview = Date.now() + 2 * 86400000; // one more correct review needed in 2 days
+  }
+}
 function rescheduleMistakeEntry(entryId) {
   const u = currentUserData();
   const entry = u.mistakeBank.find(m => m.id === entryId);
-  if (entry) { entry.timesWrong += 1; entry.nextReview = Date.now() + entry.timesWrong * 2 * 86400000; }
+  if (entry) { entry.timesWrong += 1; entry.correctStreak = 0; entry.nextReview = Date.now() + entry.timesWrong * 2 * 86400000; }
 }
 function dueMistakes() {
   const u = currentUserData();
@@ -151,7 +165,7 @@ function recordAnswer(q, isCorrect) {
   u.progress[q.topic].total += 1;
   if (isCorrect) {
     u.progress[q.topic].correct += 1;
-    if (S.quiz.mode === 'review' && S.quiz.currentEntryId) removeMistakeEntry(S.quiz.currentEntryId);
+    if (S.quiz.mode === 'review' && S.quiz.currentEntryId) handleCorrectReview(S.quiz.currentEntryId);
   } else {
     if (S.quiz.mode === 'review' && S.quiz.currentEntryId) rescheduleMistakeEntry(S.quiz.currentEntryId);
     else addToMistakeBank(q);
@@ -204,7 +218,15 @@ function showAuthErr(msg) {
   const e = document.getElementById('auth-err');
   e.textContent = msg; e.style.display = 'block';
 }
-function submitAuth() {
+// SHA-256 password hashing via the browser's built-in Web Crypto API (no external library).
+// Passwords are never stored or compared in plain text — only this hash is saved to localStorage.
+async function hashPassword(password, salt) {
+  const enc = new TextEncoder();
+  const data = enc.encode('vce-maths-app:' + salt + ':' + password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+async function submitAuth() {
   hideAuthMsgs();
   const email = document.getElementById('inp-email').value.trim().toLowerCase();
   const pass = document.getElementById('inp-pass').value;
@@ -216,14 +238,16 @@ function submitAuth() {
   if (S.authMode === 'signup') {
     if (!name) return showAuthErr('Please enter your name.');
     if (DB.users[email]) return showAuthErr('An account with this email already exists. Try logging in instead.');
-    DB.users[email] = { ...freshUserData(name, email), password: pass };
+    const hashed = await hashPassword(pass, email);
+    DB.users[email] = { ...freshUserData(name, email), password: hashed };
     DB.currentUser = email;
     saveStore();
     toast(`Welcome, ${name}!`);
     enterApp();
   } else {
     const u = DB.users[email];
-    if (!u || u.password !== pass) return showAuthErr('Incorrect email or password.');
+    const hashed = await hashPassword(pass, email);
+    if (!u || u.password !== hashed) return showAuthErr('Incorrect email or password.');
     DB.currentUser = email;
     saveStore();
     toast(`Welcome back, ${u.name}!`);
@@ -253,7 +277,7 @@ function openProfile() {
   document.getElementById('pwd-ok').style.display = 'none';
   show('profile');
 }
-function changePassword() {
+async function changePassword() {
   const u = currentUserData();
   const errEl = document.getElementById('pwd-err');
   const okEl = document.getElementById('pwd-ok');
@@ -263,12 +287,13 @@ function changePassword() {
   const next = document.getElementById('pwd-new').value;
   const confirm = document.getElementById('pwd-confirm').value;
 
-  if (u.password !== current) { errEl.textContent = 'Current password is incorrect.'; errEl.style.display = 'block'; return; }
+  const hashedCurrent = await hashPassword(current, u.email);
+  if (u.password !== hashedCurrent) { errEl.textContent = 'Current password is incorrect.'; errEl.style.display = 'block'; return; }
   if (next.length < 4) { errEl.textContent = 'New password must be at least 4 characters.'; errEl.style.display = 'block'; return; }
   if (next !== confirm) { errEl.textContent = 'New password and confirmation do not match.'; errEl.style.display = 'block'; return; }
   if (next === current) { errEl.textContent = 'New password must be different from your current password.'; errEl.style.display = 'block'; return; }
 
-  u.password = next;
+  u.password = await hashPassword(next, u.email);
   saveStore();
   document.getElementById('pwd-current').value = '';
   document.getElementById('pwd-new').value = '';
@@ -306,6 +331,10 @@ function drawRing(canvas, pct) {
   ctx.scale(dpr,dpr);
   const cx = size/2, cy = size/2, r = size/2 - 5;
 
+  // Ring colour reflects urgency, not "goodness" — this is a priority score (higher = needs
+  // more revision), not an achievement score, so it should never default to a reassuring colour.
+  const ringColor = pct >= 60 ? '#f87171' : (pct >= 30 ? '#f59e0b' : '#2dd4bf');
+
   const start = performance.now();
   const duration = 700;
   function frame(now) {
@@ -316,7 +345,7 @@ function drawRing(canvas, pct) {
     ctx.clearRect(0,0,size,size);
     ctx.strokeStyle = 'rgba(255,255,255,0.08)';
     ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
-    ctx.strokeStyle = '#2dd4bf'; ctx.lineWidth = 6; ctx.lineCap='round';
+    ctx.strokeStyle = ringColor; ctx.lineWidth = 6; ctx.lineCap='round';
     ctx.beginPath(); ctx.arc(cx,cy,r, -Math.PI/2, -Math.PI/2 + (current/100)*Math.PI*2); ctx.stroke();
 
     if (t < 1) ringAnimId = requestAnimationFrame(frame);
