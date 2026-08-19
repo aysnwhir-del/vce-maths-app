@@ -353,7 +353,7 @@ const GENERATORS = {
       const a = rnd(1,9), d = rnd(2,9)*rsign(), n = rnd(4,8);
       const val = a + (n-1)*d;
       const text = `Find the ${n}th term of the arithmetic sequence with first term ${a} and common difference ${d}.`;
-      const distractors = [ String(val+d), String(val-d), String(a+n*d) ];
+      const distractors = [ String(val+d), String(val-d), String(val+2*d) ];
       return buildQ(text, String(val), distractors, 'arithmetic_seq',
         ['Use tₙ = a + (n−1)d.', `a=${a}, d=${d}, n=${n}`],
         [{t:'Substitute into the formula', x:`t${n} = ${a} + (${n}−1)×${d}`}], `t${n} = ${val}`);
@@ -382,7 +382,7 @@ const GENERATORS = {
     if (diff === 'easy') {
       const [a,b,c] = PYTHAG[rnd(0,PYTHAG.length-1)];
       const text = `A right-angled triangle has legs of ${a} cm and ${b} cm. Find the hypotenuse.`;
-      const distractors = [ String(c+2), String(a+b), String(c-1) ];
+      const distractors = [ String(c+2), String(Math.max(1,c-2)), String(c+4) ];
       return buildQ(text, `${c} cm`, distractors, 'pythagoras',
         ['Use Pythagoras: c² = a² + b².', `${a}² + ${b}²`],
         [{t:'Apply Pythagoras', x:`c² = ${a}² + ${b}² = ${a*a+b*b}`}], `c = ${c} cm`);
@@ -432,7 +432,7 @@ const GENERATORS = {
     const upper = rnd(2,4);
     const val = coeff/2 * upper*upper;
     const text = `Evaluate ∫₀^${upper} ${coeff}x dx`;
-    const distractors = [ String(val+upper), String(coeff*upper), String(val-2) ];
+    const distractors = [ String(val+upper), String(coeff*upper*upper), String(Math.max(1,val-2)) ];
     return buildQ(text, String(val), distractors, 'power_rule_integ',
       ['First find the antiderivative, then substitute the bounds.', `∫${coeff}x dx = ${coeff/2}x²`],
       [{t:'Antidifferentiate', x:`${coeff/2}x²`}, {t:'Substitute bounds 0 to ${upper}', x:`${coeff/2}×${upper}² − 0`}], `${val}`);
@@ -445,7 +445,7 @@ const GENERATORS = {
       const text = `Simplify ${base}${sup(p1)} × ${base}${sup(p2)}`;
       const sum = p1+p2;
       const correct = `${base}${sup(sum)}`;
-      const distractors = [ `${base}${sup(p1*p2)}`, `${base*2}${sup(sum)}`, `${base}${sup(sum+1)}` ];
+      const distractors = [ `${base}${sup(p1)}`, `${base*2}${sup(sum)}`, `${base}${sup(sum+1)}` ];
       return buildQ(text, correct, distractors, 'index_laws',
         ['Same base — add the powers.', `${p1} + ${p2}`],
         [{t:'Add the powers', x:`${p1} + ${p2} = ${sum}`}], `${base}${sup(sum)}`);
@@ -852,7 +852,7 @@ const GENERATORS = {
     const mean = fmt2(n*p);
     const variance = fmt2(n*p*(1-p));
     const text = `X ~ Binomial(n=${n}, p=${p}). Find the mean E(X) = np.`;
-    const distractors = [ variance, fmt2(n*p+2), fmt2(p*p*n) ];
+    const distractors = [ variance, fmt2(Number(mean)+2), fmt2(Math.max(0.1,Number(mean)-2)) ];
     return buildQ(text, mean, distractors, 'binomial_mean_var',
       ['Mean of a binomial distribution: E(X) = np.', `${n} × ${p}`],
       [{t:'Multiply n by p', x:`${n} × ${p} = ${mean}`}], `E(X) = ${mean} (Var(X) = ${variance})`);
@@ -907,7 +907,9 @@ const GENERATORS = {
       const cosSq10 = 10 - sinSq;
       const text = `If sin²θ = 0.${sinSq}, find cos²θ.`;
       const correct = `0.${cosSq10}`;
-      const distractors = [ `0.${sinSq}`, `0.${Math.min(9,cosSq10+2)}`, `1.${sinSq}` ];
+      const wrongVals = [1,2,3,4,5,6,7,8,9].filter(v=>v!==cosSq10);
+      for (let i=wrongVals.length-1;i>0;i--){const j=rnd(0,i);[wrongVals[i],wrongVals[j]]=[wrongVals[j],wrongVals[i]];}
+      const distractors = [ `0.${wrongVals[0]}`, `0.${wrongVals[1]}`, `0.${wrongVals[2]}` ];
       return buildQ(text, correct, distractors, 'pythagorean_identity',
         ['Use sin²θ + cos²θ = 1.', `cos²θ = 1 − 0.${sinSq}`],
         [{t:'Rearrange the identity', x:`cos²θ = 1 − sin²θ`}, {t:'Substitute', x:`cos²θ = 1 − 0.${sinSq}`}], `cos²θ = 0.${cosSq10}`);
@@ -917,7 +919,9 @@ const GENERATORS = {
       const sinSq10 = 10 - cosSq;
       const text = `If cos²θ = 0.${cosSq}, find sin²θ.`;
       const correct = `0.${sinSq10}`;
-      const distractors = [ `0.${cosSq}`, `0.${Math.max(1,sinSq10-2)}`, `1.${cosSq}` ];
+      const wrongVals2 = [1,2,3,4,5,6,7,8,9].filter(v=>v!==sinSq10);
+      for (let i=wrongVals2.length-1;i>0;i--){const j=rnd(0,i);[wrongVals2[i],wrongVals2[j]]=[wrongVals2[j],wrongVals2[i]];}
+      const distractors = [ `0.${wrongVals2[0]}`, `0.${wrongVals2[1]}`, `0.${wrongVals2[2]}` ];
       return buildQ(text, correct, distractors, 'pythagorean_identity',
         ['Use sin²θ + cos²θ = 1.', `sin²θ = 1 − 0.${cosSq}`],
         [{t:'Rearrange the identity', x:`sin²θ = 1 − cos²θ`}, {t:'Substitute', x:`sin²θ = 1 − 0.${cosSq}`}], `sin²θ = 0.${sinSq10}`);
@@ -939,7 +943,7 @@ const GENERATORS = {
       const dydx = rnd(2,9), dxdt = rnd(2,9);
       const dydt = dydx*dxdt;
       const text = `If dy/dx = ${dydx} and dx/dt = ${dxdt}, find dy/dt.`;
-      const distractors = [ String(dydt+dxdt), String(dydx+dxdt), String(Math.round(dydt/2)) ];
+      const distractors = [ String(dydt+dxdt), String(Math.max(1,dydt-dxdt)), String(dydt+2*dxdt) ];
       return buildQ(text, String(dydt), distractors, 'related_rate',
         ['Use dy/dt = dy/dx × dx/dt.', `${dydx} × ${dxdt}`],
         [{t:'Substitute into the chain rule for rates', x:`dy/dt = ${dydx} × ${dxdt}`}], `dy/dt = ${dydt}`);
@@ -950,7 +954,7 @@ const GENERATORS = {
       const dydx = Math.round(dydt/dxdt);
       const dydtClean = dydx*dxdt;
       const text = `If dy/dt = ${dydtClean} and dx/dt = ${dxdt}, find dy/dx.`;
-      const distractors = [ String(dydx+2), String(Math.max(1,dydx-2)), String(dxdt) ];
+      const distractors = [ String(dydx+2), String(Math.max(1,dydx-2)), String(dydx+4) ];
       return buildQ(text, String(dydx), distractors, 'related_rate',
         ['Rearrange dy/dt = dy/dx × dx/dt to solve for dy/dx.', 'dy/dx = (dy/dt) ÷ (dx/dt)'],
         [{t:'Rearrange and substitute', x:`dy/dx = ${dydtClean} / ${dxdt}`}], `dy/dx = ${dydx}`);
@@ -960,7 +964,7 @@ const GENERATORS = {
     // Area of circle A = πr², dA/dt = 2πr × dr/dt — use π≈3 for clean-ish integer-flavoured teaching example
     const dAdt = Math.round(2*Math.PI*r*drdt);
     const text = `A circle's radius is growing at ${drdt} cm/s. When r = ${r} cm, find the rate of change of area (dA/dt), given A = πr² (nearest whole number, using dA/dt = 2πr·dr/dt).`;
-    const distractors = [ String(dAdt+5), String(Math.max(1,dAdt-5)), String(Math.round(Math.PI*r*r)) ];
+    const distractors = [ String(dAdt+5), String(Math.max(1,dAdt-5)), String(dAdt+10) ];
     return buildQ(text, String(dAdt), distractors, 'related_rate',
       ['Differentiate A = πr² to get dA/dr = 2πr, then apply the chain rule.', 'dA/dt = dA/dr × dr/dt = 2πr × dr/dt'],
       [{t:'Find dA/dr', x:`dA/dr = 2πr = 2π×${r}`}, {t:'Multiply by dr/dt', x:`dA/dt = 2π×${r}×${drdt}`}], `dA/dt ≈ ${dAdt} cm²/s`);
