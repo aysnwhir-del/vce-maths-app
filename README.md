@@ -1,6 +1,18 @@
-# VCE Maths Support App (v5)
+# VCE Maths Support App (v6)
 
 Adaptive Learning & Mistake Bank System — Task 6 (Develop Your Solution).
+
+## What's new in v6 — fixes from an independent code review
+
+An independent reviewer went through the full source code (~3,000 lines) and stress-tested every question generator 2,000 times each. Their findings and the fixes made:
+
+| Finding | Fix |
+|---|---|
+| **`general_sequences` (easy) was broken 100% of the time** — two of its three multiple-choice distractors were algebraically guaranteed to be the same number (`a+(n-1)d+d` and `a+n*d` are identical), so the app was silently padding in a "(≈1)" filler option on every single question of that type. | Replaced the duplicate distractor formula with an independent one. Re-tested at 2,000 iterations: 0% collision rate. |
+| **Three more generators had high (18–35%) rates of the same underlying issue** (`methods_integration` hard, `specialist_circular` easy/medium, `methods_explog` easy), each caused by a distractor formula that could algebraically coincide with the correct answer for certain random inputs. | Fixed all four, then re-swept **all 27 topics** (not just the 4 flagged) at 2,000 iterations each — found and fixed 5 more pre-existing generators above 10%. Total: 162,000 questions generated, 0 hard errors, collision-fallback rate down to 1.2% overall (from several generators that were previously as high as 100%). |
+| **Passwords were stored in plain text** in `localStorage`, contradicting the "saved securely" claim on the login screen and the Task 2 non-functional requirement that login data be encrypted. | Passwords are now hashed with SHA-256 (via the browser's built-in Web Crypto API — no external library) before ever being stored or compared. The login screen copy was corrected to accurately describe what actually happens ("password is hashed... progress is stored locally, nothing sent to a server") instead of the vaguer, less accurate "saved securely". |
+| **Mistake Bank cleared an entry after a single correct review answer** — real spaced repetition shouldn't treat one lucky guess as "learned". | A mistake now needs **2 consecutive correct review answers** before it's removed from the bank. A single wrong answer during review resets that streak back to 0, same as before. |
+| **The "Exam Impact Score" ring could be misread as a normal score** (e.g. a student might think 80% is a good result), when a *higher* number actually means a topic needs *more* revision, and the ring was always drawn in teal (a "good" colour) regardless of the value. | The ring label was changed to "Revision Priority" and its colour now reflects urgency — red ≥60%, gold 30–59%, teal <30% — instead of always defaulting to a reassuring colour. |
 
 ## What's new in v5
 
