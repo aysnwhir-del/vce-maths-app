@@ -1,6 +1,20 @@
-# VCE Maths Support App (v6)
+# VCE Maths Support App (v7)
 
 Adaptive Learning & Mistake Bank System — Task 6 (Develop Your Solution).
+
+## What's new in v7 — fixes from teacher + real-student feedback
+
+The teacher and 8 real VCE students trialled the live app. Their feedback and the fixes made:
+
+| Feedback | Fix |
+|---|---|
+| **(Teacher) "Nothing to review even after seven wrong answers in Mistake Bank"** — a real bug, not a misunderstanding. Every mistake was scheduled 24 real hours in the future before it became "due", so answering questions wrong and immediately checking Review always showed nothing. | The first-review interval was cut from 24 hours to 10 minutes. The Mistake Bank → Review → Bound Reference loop is now fully demonstrable within a single sitting, while still preserving genuine "not immediately due" spaced repetition. |
+| **(Teacher) "Put Revision Priority button inside Start Practice button"** | The ring is no longer a separate floating element above the button — it's now embedded directly inside the right-hand side of the "Start Practice — [Topic]" button itself, tying the priority number directly to the action it explains. |
+| **(Student) In some questions (e.g. Trigonometry), only the correct answer had a unit attached (e.g. "34, 18 cm, 20, 10"), making it obvious.** A sharp catch — this was a real formatting bug, not intended difficulty. | Found and fixed 5 instances of this across the codebase (Trigonometry ×2, Vector angle, Newton's Law-style acceleration, exponential-equation "x=" answers) — every multiple-choice option now consistently includes its unit/prefix, not just the correct one. |
+| **(Student) "It might not be morning and it says 'Welcome back' when I only just made my account."** | Brand-new signups now see "Hi, [name]" instead of "Welcome back". Returning users get a real time-of-day greeting (Good morning / afternoon / evening) instead of a hardcoded "Welcome back" that could show at any hour. |
+| **(Student) "The empty space to either side [of the hero card] feels really blank."** | Directly addressed by the same Revision Priority + Start Practice merge above — removing the separately-floating ring tightened up the hero card considerably. |
+
+Other student feedback received but intentionally not actioned yet (documented here for the Journal, as genuine scope decisions rather than oversights): splitting content into a Year 11 / Year 12 pathway, a more visual "sense of progress" feature, a different colour theme, and additional easier/foundational topics (e.g. basic algebra). These are reasonable ideas for a future version but are out of scope given the current timeline.
 
 ## What's new in v6 — fixes from an independent code review
 

@@ -71,16 +71,18 @@
         <div class="hero-accent"></div>
         <div class="hero-top">
           <div>
-            <h2 id="home-username-h2">Welcome back, <span id="home-username"></span></h2>
+            <h2 id="home-username-h2"><span id="home-greeting-prefix">Welcome back,</span> <span id="home-username"></span></h2>
             <p id="home-substat">0 questions answered so far</p>
             <div class="streak-badge" id="streak-badge" style="display:none">🔥 <span id="streak-num">0</span> day streak</div>
           </div>
-          <div>
-            <div class="eis-ring"><canvas id="eis-canvas"></canvas><span id="eis-pct">0%</span></div>
-            <div class="eis-label">Revision<br/>Priority</div>
-          </div>
         </div>
-        <button class="btn-start" id="btn-start"><span id="btn-start-label">▶ Start Practice</span></button>
+        <button class="btn-start" id="btn-start">
+          <span id="btn-start-label">▶ Start Practice</span>
+          <span class="btn-start-priority">
+            <span class="eis-ring"><canvas id="eis-canvas"></canvas><span id="eis-pct">0%</span></span>
+            <span class="eis-label">Priority</span>
+          </span>
+        </button>
       </div>
 
       <div class="section-label">Topics — sorted by <b>Exam Impact Score</b></div>

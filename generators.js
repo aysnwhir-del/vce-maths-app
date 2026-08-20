@@ -279,7 +279,7 @@ const GENERATORS = {
     const cosT = dot/(m1*m2);
     const angle = Math.round(Math.acos(Math.max(-1,Math.min(1,cosT))) * 180/Math.PI);
     const text = `Find the angle between a = ${x1}i + ${y1}j and b = ${x2}i + ${y2}j (nearest degree).`;
-    const distractors = [ String(Math.min(89,angle+15)), String(Math.max(1,angle-10)), String(90) ];
+    const distractors = [ String(Math.min(89,angle+15)), String(Math.max(1,angle-10)), String(90) ].map(v=>v+'°');
     return buildQ(text, `${angle}°`, distractors, 'angle_between',
       ['Use cosθ = (a·b) / (|a||b|).', 'First find a·b, |a|, and |b| separately.'],
       [{t:'Find dot product', x:`a·b = ${dot}`}, {t:'Find magnitudes', x:`|a|=${m1}, |b|=${m2}`}, {t:'Solve for θ', x:`cosθ = ${dot}/${m1*m2} ≈ ${cosT.toFixed(2)}`}], `θ ≈ ${angle}°`);
@@ -382,7 +382,7 @@ const GENERATORS = {
     if (diff === 'easy') {
       const [a,b,c] = PYTHAG[rnd(0,PYTHAG.length-1)];
       const text = `A right-angled triangle has legs of ${a} cm and ${b} cm. Find the hypotenuse.`;
-      const distractors = [ String(c+2), String(Math.max(1,c-2)), String(c+4) ];
+      const distractors = [ String(c+2), String(Math.max(1,c-2)), String(c+4) ].map(v=>v+' cm');
       return buildQ(text, `${c} cm`, distractors, 'pythagoras',
         ['Use Pythagoras: c² = a² + b².', `${a}² + ${b}²`],
         [{t:'Apply Pythagoras', x:`c² = ${a}² + ${b}² = ${a*a+b*b}`}], `c = ${c} cm`);
@@ -390,7 +390,7 @@ const GENERATORS = {
     if (diff === 'medium') {
       const [a,b,c] = PYTHAG[rnd(0,PYTHAG.length-1)];
       const text = `A right-angled triangle has a hypotenuse of ${c} cm and one leg of ${a} cm. Find the other leg.`;
-      const distractors = [ String(b+2), String(c-a), String(b-1) ];
+      const distractors = [ String(b+2), String(c-a), String(Math.max(1,b-1)) ].map(v=>v+' cm');
       return buildQ(text, `${b} cm`, distractors, 'pythagoras',
         ['Rearrange Pythagoras: b² = c² − a².', `${c}² − ${a}²`],
         [{t:'Apply Pythagoras', x:`b² = ${c}² − ${a}² = ${c*c-a*a}`}], `b = ${b} cm`);
@@ -399,7 +399,7 @@ const GENERATORS = {
     const [a,b,c] = PYTHAG[rnd(0,PYTHAG.length-1)];
     const angle = Math.round(Math.asin(a/c) * 180/Math.PI);
     const text = `A right-angled triangle has an opposite side of ${a} cm and a hypotenuse of ${c} cm. Find the angle θ (nearest degree).`;
-    const distractors = [ String(Math.min(89,angle+8)), String(Math.max(1,angle-6)), String(90-angle) ];
+    const distractors = [ String(Math.min(89,angle+8)), String(Math.max(1,angle-6)), String(90-angle) ].map(v=>v+'°');
     return buildQ(text, `${angle}°`, distractors, 'trig_ratio',
       ['Use sinθ = opposite/hypotenuse, then inverse sine.', `sinθ = ${a}/${c}`],
       [{t:'Set up the ratio', x:`sinθ = ${a}/${c} = ${(a/c).toFixed(2)}`}, {t:'Take inverse sine', x:`θ = sin⁻¹(${(a/c).toFixed(2)})`}], `θ ≈ ${angle}°`);
@@ -463,7 +463,7 @@ const GENERATORS = {
     // hard — solve exponential equation aˣ = aⁿ
     const base = rnd(2,5), n = rnd(2,6);
     const text = `Solve for x: ${base}ˣ = ${base}${sup(n)}`;
-    const distractors = [ String(n+1), String(Math.max(1,n-1)), String(n*2) ];
+    const distractors = [ String(n+1), String(Math.max(1,n-1)), String(n*2) ].map(v=>'x = '+v);
     return buildQ(text, `x = ${n}`, distractors, 'index_laws',
       ['If the bases are equal, the powers must be equal too.', `${base}ˣ = ${base}${sup(n)}`],
       [{t:'Match the powers directly', x:`x = ${n}`}], `x = ${n}`);

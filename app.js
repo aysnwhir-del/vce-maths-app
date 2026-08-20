@@ -76,6 +76,7 @@ const S = {
   notesFilter: 'all',
   notesSearch: '',
   practiceFilter: 'all',
+  justSignedUp: false,
 };
 
 /* ── EXAM IMPACT SCORE ───────────────────────────────────────── */
@@ -114,10 +115,17 @@ function overallEIS() {
    of that question (not just an id) — necessary because practice
    questions are now procedurally generated and unique each time,
    so there's no static question bank to "look up" later. */
+// Spaced-repetition intervals are scaled in MINUTES rather than days. A real long-term study tool
+// would use day/week-scale spacing, but that makes the feature invisible in a single testing session —
+// a teacher or reviewer answering questions wrong now has no way to see the review step happen without
+// waiting 24 real hours. Minute-scale spacing preserves the "not immediately due" concept while keeping
+// the whole Mistake Bank → Review → Bound Reference loop demonstrable end-to-end in one sitting.
+const REVIEW_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes before first review
+
 function addToMistakeBank(q) {
   const u = currentUserData();
   const now = Date.now();
-  u.mistakeBank.push({ id: 'm_'+now+'_'+Math.random().toString(36).slice(2,7), snapshot: q, added: now, nextReview: now + 86400000, timesWrong: 1, correctStreak: 0 });
+  u.mistakeBank.push({ id: 'm_'+now+'_'+Math.random().toString(36).slice(2,7), snapshot: q, added: now, nextReview: now + REVIEW_INTERVAL_MS, timesWrong: 1, correctStreak: 0 });
 }
 function removeMistakeEntry(entryId) {
   const u = currentUserData();
@@ -134,13 +142,13 @@ function handleCorrectReview(entryId) {
   if (entry.correctStreak >= REVIEWS_TO_CLEAR) {
     removeMistakeEntry(entryId);
   } else {
-    entry.nextReview = Date.now() + 2 * 86400000; // one more correct review needed in 2 days
+    entry.nextReview = Date.now() + REVIEW_INTERVAL_MS; // one more correct review needed
   }
 }
 function rescheduleMistakeEntry(entryId) {
   const u = currentUserData();
   const entry = u.mistakeBank.find(m => m.id === entryId);
-  if (entry) { entry.timesWrong += 1; entry.correctStreak = 0; entry.nextReview = Date.now() + entry.timesWrong * 2 * 86400000; }
+  if (entry) { entry.timesWrong += 1; entry.correctStreak = 0; entry.nextReview = Date.now() + entry.timesWrong * REVIEW_INTERVAL_MS; }
 }
 function dueMistakes() {
   const u = currentUserData();
@@ -242,6 +250,7 @@ async function submitAuth() {
     DB.users[email] = { ...freshUserData(name, email), password: hashed };
     DB.currentUser = email;
     saveStore();
+    S.justSignedUp = true;
     toast(`Welcome, ${name}!`);
     enterApp();
   } else {
@@ -325,11 +334,11 @@ function drawRing(canvas, pct) {
   cancelAnimationFrame(ringAnimId);
   const ctx = canvas.getContext('2d');
   const dpr = window.devicePixelRatio || 1;
-  const size = 66;
+  const size = 32; // matches the compact .btn-start .eis-ring size now that it's embedded in the button
   canvas.width = size*dpr; canvas.height = size*dpr;
   canvas.style.width = size+'px'; canvas.style.height = size+'px';
   ctx.scale(dpr,dpr);
-  const cx = size/2, cy = size/2, r = size/2 - 5;
+  const cx = size/2, cy = size/2, r = size/2 - 3;
 
   // Ring colour reflects urgency, not "goodness" — this is a priority score (higher = needs
   // more revision), not an achievement score, so it should never default to a reassuring colour.
@@ -343,9 +352,9 @@ function drawRing(canvas, pct) {
     const current = pct * eased;
 
     ctx.clearRect(0,0,size,size);
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-    ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
-    ctx.strokeStyle = ringColor; ctx.lineWidth = 6; ctx.lineCap='round';
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+    ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.stroke();
+    ctx.strokeStyle = ringColor; ctx.lineWidth = 4; ctx.lineCap='round';
     ctx.beginPath(); ctx.arc(cx,cy,r, -Math.PI/2, -Math.PI/2 + (current/100)*Math.PI*2); ctx.stroke();
 
     if (t < 1) ringAnimId = requestAnimationFrame(frame);
@@ -353,12 +362,22 @@ function drawRing(canvas, pct) {
   ringAnimId = requestAnimationFrame(frame);
 }
 
+function getGreeting(isNewUser) {
+  if (isNewUser) return 'Hi'; // "Welcome back" makes no sense for an account created seconds ago
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening'; // time-of-day greeting instead of a hardcoded "Welcome back" that could show at any hour
+}
+
 function renderHome() {
   const u = currentUserData();
   const allRanked = rankedTopics();
   const pct = overallEIS();
 
+  document.getElementById('home-greeting-prefix').textContent = getGreeting(S.justSignedUp) + ',';
   document.getElementById('home-username').textContent = u.name.split(' ')[0];
+  S.justSignedUp = false; // only shows the first-time greeting once, right after signup
   document.getElementById('eis-pct').textContent = pct + '%';
   drawRing(document.getElementById('eis-canvas'), pct);
 
